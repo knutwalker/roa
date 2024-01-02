@@ -232,10 +232,7 @@ struct AuthMiddleware {
 
 impl Middleware for AuthMiddleware {
     fn handle(&self, request: Request, next: MiddlewareNext<'_>) -> Result<Response, ureq::Error> {
-        let request = request.set(
-            "Authorization",
-            &format!("Bearer {}", self.api_key.expose_secret()),
-        );
+        let request = request.set("Authorization", self.api_key.expose_secret());
         next.handle(request)
     }
 }

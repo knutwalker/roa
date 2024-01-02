@@ -7,7 +7,7 @@ use kommandozeile::{
     tracing::debug,
     verbosity_filter, Color, Global, InputFile, OutputFile, Result, Verbose,
 };
-use secrecy::SecretString;
+use secrecy::{ExposeSecret, SecretString};
 
 use crate::dateformat::PublishDate;
 
@@ -83,12 +83,16 @@ impl Args {
     }
 
     pub fn api_key(&mut self) -> Result<SecretString> {
+        let the_key: String;
         let api_key = match (
             self.api_keys.file.take(),
             self.api_keys.cmd.take(),
-            self.api_keys.key.take(),
+            self.api_keys.key.as_ref(),
         ) {
-            (Some(file), None, None) => file.read_to_string()?,
+            (Some(file), None, None) => {
+                the_key = file.read_to_string()?;
+                the_key.trim()
+            }
             (None, Some(cmd), None) => {
                 let mut tokens = shlex::Shlex::new(&cmd);
                 let cmd = tokens.next().ok_or_eyre("missing api-key command")?;
@@ -99,12 +103,15 @@ impl Args {
                     "api-key command failed: {}",
                     String::from_utf8_lossy(&output.stderr)
                 );
-                String::from_utf8(output.stdout)?
+                the_key = String::from_utf8(output.stdout)?;
+                the_key.trim()
             }
-            (None, None, Some(key)) => return Ok(key),
+            (None, None, Some(key)) => key.expose_secret(),
             _ => unreachable!(),
         };
-        Ok(SecretString::new(api_key.trim().to_owned()))
+        let secret = SecretString::new(format!("Bearer {api_key}"));
+        self.api_keys.key = None;
+        Ok(secret)
     }
 }
 
