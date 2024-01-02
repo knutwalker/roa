@@ -36,6 +36,11 @@ pub struct Args {
     #[clap(long, short = 'n')]
     pub dry_run: bool,
 
+    /// Print the JSON response as is. Passing this flag will disable all
+    /// other output options.
+    #[clap(long, short)]
+    pub json: bool,
+
     #[clap(skip)]
     pub use_color: bool,
 
@@ -119,19 +124,8 @@ impl Args {
 #[derive(Copy, Clone, Debug, PartialEq, Eq, clap::Args)]
 #[clap(visible_alias = "ls")]
 pub struct List {
-    #[clap(flatten)]
-    pub print: ListPrint,
-}
-
-#[derive(Copy, Clone, Debug, PartialEq, Eq, clap::Args)]
-#[group(multiple = false, required = false)]
-pub struct ListPrint {
-    /// Print the posts as JSON
-    #[clap(long, short)]
-    pub json: bool,
-
     /// Only print the slugs of the posts
-    #[clap(long, short, conflicts_with = "json")]
+    #[clap(long, short)]
     pub slugs: bool,
 }
 
@@ -149,10 +143,6 @@ pub struct Get {
 #[derive(Clone, Debug, PartialEq, Eq, clap::Args)]
 #[group(multiple = false, required = false)]
 pub struct GetPrint {
-    /// Print the post as JSON
-    #[clap(long, short)]
-    pub json: bool,
-
     /// Only print the body of the post
     #[clap(long, short)]
     pub body: bool,
@@ -200,10 +190,6 @@ pub struct Update {
     /// If missing, the published_at date will not be updated.
     #[clap(long, short, value_parser = crate::dateformat::parse)]
     pub published_at: Option<PublishDate>,
-
-    /// Print the updated post as JSON
-    #[clap(long, short)]
-    pub json: bool,
 }
 
 /// Delete a post
@@ -213,10 +199,6 @@ pub struct Delete {
     /// The slug of the post to delete
     #[clap()]
     pub slug: String,
-
-    /// Print the response JSON
-    #[clap(long, short)]
-    pub json: bool,
 }
 
 /// Create a post
@@ -238,19 +220,17 @@ pub struct Create {
     /// If missing, the published_at date will not be updated.
     #[clap(long, short, value_parser = crate::dateformat::parse)]
     pub published_at: Option<PublishDate>,
-
-    /// Print the created post as JSON
-    #[clap(long, short)]
-    pub json: bool,
 }
 
 /// Run multiple commands in a row.
 ///
 /// Provide a file with a list of commands to run.
-/// One command per line. The format of the file is the same as the CLI.
-/// That is, each line is run as if called as "roa <..> $line". Global
-/// options (such as --dry-run or --verbose) are ignore and taked from
-/// this invocation instead.
+/// One command per line.
+/// The format of the file is the same as the CLI.
+/// That is, each line is run as if called as "roa <..> $line".
+/// Global options (such as --dry-run or --verbose, denoted as <..> above)
+/// are taken from each individual incovation/line and not from the call
+/// to the batch command.
 ///
 /// Lines starting with # or ; are ignored.
 /// Empty lines are ignored.

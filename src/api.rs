@@ -8,6 +8,13 @@ use ureq::{Middleware, MiddlewareNext, Request, Response};
 
 use crate::{dateformat::PublishDate, Post};
 
+#[derive(Copy, Clone, Debug, TypedBuilder)]
+#[builder(doc)]
+pub struct Opts {
+    pub dry_run: bool,
+    pub print_json: bool,
+}
+
 #[derive(Clone, Debug, TypedBuilder, Serialize)]
 #[builder(doc)]
 pub struct Create {
@@ -134,6 +141,28 @@ pub trait Action: Sized {
     type Res;
 
     fn read(self, response: Response) -> Result<Self::Res>;
+
+    fn run(
+        self,
+        client: &Client,
+        opts: Opts,
+        cont: impl FnOnce(Self::Res) -> Result<()>,
+    ) -> Result<()>
+    where
+        Self: Debug,
+    {
+        if opts.dry_run {
+            return client.dry_run(&self);
+        }
+
+        if opts.print_json {
+            return client.print(&self);
+        }
+
+        let res = client.call(self)?;
+
+        cont(res)
+    }
 }
 
 impl Action for Create {

@@ -41,7 +41,11 @@ use pulldown_cmark::{Options, Parser};
 use pulldown_cmark_frontmatter::FrontmatterExtractor;
 use serde::Deserialize;
 
-use crate::{args::Command, dateformat::PublishDate};
+use crate::{
+    api::{Action, Opts},
+    args::Command,
+    dateformat::PublishDate,
+};
 
 mod api;
 mod args;
@@ -50,53 +54,51 @@ mod dateformat;
 fn main() -> Result<()> {
     let mut args = args::Args::init()?;
     let client = api::Client::new(args.api_key()?);
-    cmd(&client, args.cmd, args.dry_run)
+    run(&client, args)
 }
 
-fn cmd(client: &api::Client, cmd: Command, dry_run: bool) -> Result<()> {
+fn run(client: &api::Client, args: args::Args) -> Result<()> {
+    let opts = Opts::builder()
+        .dry_run(args.dry_run)
+        .print_json(args.json)
+        .build();
+
+    cmd(client, opts, args.cmd)
+}
+
+fn cmd(client: &api::Client, opts: Opts, cmd: Command) -> Result<()> {
     match cmd {
-        Command::List(cmd) => list(client, cmd, dry_run),
-        Command::Create(cmd) => create(client, cmd, dry_run),
-        Command::Get(cmd) => get(client, cmd, dry_run),
-        Command::Update(cmd) => update(client, cmd, dry_run),
-        Command::Delete(cmd) => delete(client, cmd, dry_run),
-        Command::Batch(cmd) => batch(client, &cmd, dry_run),
+        Command::List(cmd) => list(client, opts, cmd),
+        Command::Create(cmd) => create(client, opts, cmd),
+        Command::Get(cmd) => get(client, opts, cmd),
+        Command::Update(cmd) => update(client, opts, cmd),
+        Command::Delete(cmd) => delete(client, opts, cmd),
+        Command::Batch(cmd) => batch(client, &cmd),
     }
 }
 
-fn list(client: &api::Client, cmd: args::List, dry_run: bool) -> Result<()> {
-    let action = api::List {};
-
-    if dry_run {
-        return client.dry_run(&action);
-    }
-
-    if cmd.print.json {
-        return client.print(&action);
-    }
-
-    let posts = client.call(action)?;
-
-    for post in posts {
-        print!("{}", post.slug);
-        if !cmd.print.slugs {
-            if let Some(title) = post.title {
-                print!(": {title}");
+fn list(client: &api::Client, opts: Opts, cmd: args::List) -> Result<()> {
+    api::List {}.run(client, opts, |posts| {
+        for post in posts {
+            print!("{}", post.slug);
+            if !cmd.slugs {
+                if let Some(title) = post.title {
+                    print!(": {title}");
+                }
+                if let Some(url) = post.url {
+                    print!(" ({url})");
+                }
+                if let Some(published_at) = post.published_at {
+                    print!(" [{published_at}]");
+                }
             }
-            if let Some(url) = post.url {
-                print!(" ({url})");
-            }
-            if let Some(published_at) = post.published_at {
-                print!(" [{published_at}]");
-            }
+            println!();
         }
-        println!();
-    }
-
-    Ok(())
+        Ok(())
+    })
 }
 
-fn create(client: &api::Client, cmd: args::Create, dry_run: bool) -> Result<()> {
+fn create(client: &api::Client, opts: Opts, cmd: args::Create) -> Result<()> {
     let post = PostInput::from(cmd.title, None, cmd.published_at, Some(cmd.body))?;
     if post.slug.is_some() {
         warn!(concat!(
@@ -113,62 +115,44 @@ fn create(client: &api::Client, cmd: args::Create, dry_run: bool) -> Result<()> 
         "or as a leading h1 before the post frontmatter"
     ))?;
 
-    let action = api::Create::builder()
+    api::Create::builder()
         .title(title)
         .body(post.body)
         .published_at(post.published_at)
-        .build();
-
-    if dry_run {
-        return client.dry_run(&action);
-    }
-
-    if cmd.json {
-        return client.print(&action);
-    }
-
-    let post = client.call(action)?;
-
-    print_post(post, true, false);
-
-    Ok(())
+        .build()
+        .run(client, opts, |post| {
+            print_post(post, true, false);
+            Ok(())
+        })
 }
 
-fn get(client: &api::Client, cmd: args::Get, dry_run: bool) -> Result<()> {
-    let action = api::Get::builder().slug(cmd.slug).build();
-
-    if dry_run {
-        return client.dry_run(&action);
-    }
-
-    if cmd.print.json {
-        return client.print(&action);
-    }
-
-    let post = client.call(action)?;
-
-    if let Some(file) = cmd.print.output {
-        match file {
-            OutputFile::File(path) | OutputFile::Stdout(Some(path)) => {
-                let mut file = File::create(path)?;
-                write!(file, "{post}")?;
-                file.flush()?;
+fn get(client: &api::Client, opts: Opts, cmd: args::Get) -> Result<()> {
+    api::Get::builder()
+        .slug(cmd.slug)
+        .build()
+        .run(client, opts, |post| {
+            if let Some(file) = cmd.print.output {
+                match file {
+                    OutputFile::File(path) | OutputFile::Stdout(Some(path)) => {
+                        let mut file = File::create(path)?;
+                        write!(file, "{post}")?;
+                        file.flush()?;
+                    }
+                    OutputFile::Stdout(None) => {
+                        let mut stdout = std::io::stdout().lock();
+                        write!(stdout, "{post}")?;
+                        stdout.flush()?;
+                    }
+                }
+                return Ok(());
             }
-            OutputFile::Stdout(None) => {
-                let mut stdout = std::io::stdout().lock();
-                write!(stdout, "{post}")?;
-                stdout.flush()?;
-            }
-        }
-        return Ok(());
-    }
 
-    print_post(post, !cmd.print.body, !cmd.print.no_body);
-
-    Ok(())
+            print_post(post, !cmd.print.body, !cmd.print.no_body);
+            Ok(())
+        })
 }
 
-fn update(client: &api::Client, cmd: args::Update, dry_run: bool) -> Result<()> {
+fn update(client: &api::Client, opts: Opts, cmd: args::Update) -> Result<()> {
     let post = PostInput::from(cmd.title, cmd.new_slug, cmd.published_at, cmd.body)?;
     let slug = cmd.slug.or_else(|| post.slug.clone()).ok_or_eyre(concat!(
         "The slug is required to update a post. ",
@@ -177,46 +161,27 @@ fn update(client: &api::Client, cmd: args::Update, dry_run: bool) -> Result<()> 
         "or as a leading h1 before the post frontmatter"
     ))?;
 
-    let action = api::Update::builder()
+    api::Update::builder()
         .slug(slug)
         .title(post.title)
         .updated_slug(post.slug)
         .body(post.body)
         .published_at(post.published_at)
-        .build();
-
-    if dry_run {
-        return client.dry_run(&action);
-    }
-
-    if cmd.json {
-        return client.print(&action);
-    }
-
-    let post = client.call(action)?;
-
-    print_post(post, true, false);
-
-    Ok(())
+        .build()
+        .run(client, opts, |post| {
+            print_post(post, true, false);
+            Ok(())
+        })
 }
 
-fn delete(client: &api::Client, cmd: args::Delete, dry_run: bool) -> Result<()> {
-    let action = api::Delete::builder().slug(cmd.slug).build();
-
-    if dry_run {
-        return client.dry_run(&action);
-    }
-
-    if cmd.json {
-        return client.print(&action);
-    }
-
-    client.call(action)?;
-
-    Ok(())
+fn delete(client: &api::Client, opts: Opts, cmd: args::Delete) -> Result<()> {
+    api::Delete::builder()
+        .slug(cmd.slug)
+        .build()
+        .run(client, opts, |()| Ok(()))
 }
 
-fn batch(client: &api::Client, cmd: &args::Batch, dry_run: bool) -> Result<()> {
+fn batch(client: &api::Client, cmd: &args::Batch) -> Result<()> {
     let batch = cmd.batch.read_to_string()?;
     batch
         .lines()
@@ -237,7 +202,7 @@ fn batch(client: &api::Client, cmd: &args::Batch, dry_run: bool) -> Result<()> {
                 std::iter::once("batch".to_owned()).chain(shlex::Shlex::new(line)),
             )?)
         })
-        .map(|args| args.and_then(|a| crate::cmd(client, a.cmd, dry_run)))
+        .map(|args| args.and_then(|a| run(client, a)))
         .try_for_each(|result| {
             if cmd.ignore_errors {
                 if let Err(err) = result {
