@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2](https://github.com/knutwalker/roa/compare/v0.1.1...v0.1.2) - 2024-01-09
+
+### Other
+- Set correct cateogry slugs
+- release ([#1](https://github.com/knutwalker/roa/pull/1))
+- Use value directly in print macro
+- Set rust-version to the current stable version
+- Release
+- Move json output to a global option
+- Create api key with Bearer when first reading it
+- Init
+
 ## [0.1.1](https://github.com/knutwalker/roa/compare/v0.1.0...v0.1.1) - 2024-01-09
 
 ### Other
