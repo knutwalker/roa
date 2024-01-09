@@ -6,6 +6,7 @@ repository = "https://github.com/knutwalker/roa"
 authors = ["Paul Horn <developer@knutwalker.de>"]
 description = "Unofficial CLI for mataroa.blog"
 license = "MIT OR Apache-2.0"
+rust-version = "1.75.0"
 publish = true
 readme = "README.md"
 categories = ["cli"]
