@@ -1,21 +1,35 @@
 [package]
-name = "roa"
+name = "mataroa-cli"
 version = "0.1.0"
 edition = "2021"
 repository = "https://github.com/knutwalker/roa"
 authors = ["Paul Horn <developer@knutwalker.de>"]
 description = "Unofficial CLI for mataroa.blog"
 license = "MIT OR Apache-2.0"
-publish = false
+publish = true
 readme = "README.md"
 categories = ["cli"]
 keywords = ["mataroa", "blog"]
+
+[[bin]]
+name = "roa"
+path = "src/main.rs"
 
 [dependencies]
 chrono = { version = "0.4.31", default-features = false, features = ["std"] }
 clap = { version = "4.4.12", features = ["env", "derive", "string"] }
 human-date-parser = "0.1.1"
-kommandozeile = { git = "https://github.com/knutwalker/kommandozeile", version = "0.1.0", features = ["clap_app_color", "clap_color", "clap_derive", "clap_file", "clap_verbose", "color-eyre", "setup_clap", "setup_color-eyre", "setup_tracing"], default-features = false }
+kommandozeile = { version = "0.1.0", features = [
+  "clap_app_color",
+  "clap_color",
+  "clap_derive",
+  "clap_file",
+  "clap_verbose",
+  "color-eyre",
+  "setup_clap",
+  "setup_color-eyre",
+  "setup_tracing",
+], default-features = false }
 pulldown-cmark = { version = "0.9.3", default-features = false }
 pulldown-cmark-frontmatter = "0.2.0"
 secrecy = "0.8.0"
@@ -24,10 +38,19 @@ serde_json = "1.0.109"
 serde_yaml = "0.9.29"
 shlex = "1.2.0"
 typed-builder = "0.18.0"
-ureq = { version = "2.9.1", default-features = false, features = ["json", "tls"] }
+ureq = { version = "2.9.1", default-features = false, features = [
+  "json",
+  "tls",
+] }
 
 [build-dependencies]
-vergen = { version = "8.2.6", features = ["build", "cargo", "git", "rustc", "gitcl"] }
+vergen = { version = "8.2.6", features = [
+  "build",
+  "cargo",
+  "git",
+  "rustc",
+  "gitcl",
+] }
 
 [profile.release]
 codegen-units = 1
@@ -39,7 +62,37 @@ overflow-checks = true
 rpath = false
 strip = true
 
-[package.metadata.release]
-pre-release-commit-message = "Release {{crate_name}} {{version}}"
-sign-commit = true
-sign-tag = true
+[lints.rust]
+bad_style = "warn"
+dead_code = "warn"
+improper_ctypes = "warn"
+missing_copy_implementations = "warn"
+missing_debug_implementations = "warn"
+no_mangle_generic_items = "warn"
+non_shorthand_field_patterns = "warn"
+overflowing_literals = "warn"
+path_statements = "warn"
+patterns_in_fns_without_body = "warn"
+private_bounds = "warn"
+private_interfaces = "warn"
+rust_2018_idioms = "warn"
+trivial_casts = "warn"
+trivial_numeric_casts = "warn"
+unconditional_recursion = "warn"
+unsafe_code = "warn"
+unused = "warn"
+unused_allocation = "warn"
+unused_comparisons = "warn"
+unused_crate_dependencies = "warn"
+unused_extern_crates = "warn"
+unused_import_braces = "warn"
+unused_parens = "warn"
+unused_qualifications = "warn"
+unused_results = "warn"
+
+[lints.clippy]
+all = "warn"
+cargo = "warn"
+pedantic = "warn"
+nursery = "warn"
+multiple_crate_versions = { level = "allow", priority = 1 }

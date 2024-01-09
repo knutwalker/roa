@@ -157,7 +157,7 @@ pub struct GetPrint {
     /// The file can be used as input to the `update` and `new` commands.
     ///
     /// The file will be overwritten if it already exists.
-    #[clap(long, short)]
+    #[clap(long, short, default_missing_value = "-")]
     pub output: Option<OutputFile>,
 }
 
@@ -165,7 +165,7 @@ pub struct GetPrint {
 #[derive(Clone, Debug, PartialEq, Eq, clap::Args)]
 #[clap(visible_alias = "edit")]
 pub struct Update {
-    /// The slug of the post to get
+    /// The slug of the post to update
     #[clap(long, short)]
     pub slug: Option<String>,
 
@@ -173,7 +173,7 @@ pub struct Update {
     #[clap()]
     pub body: Option<InputFile>,
 
-    /// The slug of the post to update.
+    /// The new slug for the post.
     /// If not provided, the slug will be read from the frontmatter of the file.
     /// If missing, the slug will not be updated.
     #[clap(long)]

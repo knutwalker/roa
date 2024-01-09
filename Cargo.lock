@@ -506,7 +506,8 @@ dependencies = [
 [[package]]
 name = "kommandozeile"
 version = "0.1.0"
-source = "git+https://github.com/knutwalker/kommandozeile#77ad97a4b79f4e367c577c421a1b0429ae4b7a01"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0d18a56cdc4eeb54d361b23ceaca11c64c9cbc31344471d75db93f5c4b25d1b9"
 dependencies = [
  "clap",
  "color-eyre",
@@ -541,6 +542,26 @@ name = "log"
 version = "0.4.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b5e6163cb8c49088c2c36f57875e58ccd8c87c7427f7fbd50ea6710b2f3f2e8f"
+
+[[package]]
+name = "mataroa-cli"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "clap",
+ "human-date-parser",
+ "kommandozeile",
+ "pulldown-cmark",
+ "pulldown-cmark-frontmatter",
+ "secrecy",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "shlex",
+ "typed-builder",
+ "ureq",
+ "vergen",
+]
 
 [[package]]
 name = "matchers"
@@ -778,26 +799,6 @@ dependencies = [
  "spin",
  "untrusted",
  "windows-sys 0.48.0",
-]
-
-[[package]]
-name = "roa"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "clap",
- "human-date-parser",
- "kommandozeile",
- "pulldown-cmark",
- "pulldown-cmark-frontmatter",
- "secrecy",
- "serde",
- "serde_json",
- "serde_yaml",
- "shlex",
- "typed-builder",
- "ureq",
- "vergen",
 ]
 
 [[package]]

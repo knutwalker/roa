@@ -46,7 +46,7 @@ target/debug/$(APP): .cargoinstalled Cargo.toml Cargo.lock $(shell find . \( -pa
 > cargo build --bin $(APP)
 
 target/release/$(APP): .cargoinstalled Cargo.toml Cargo.lock $(shell find . \( -path './src*' \) -type f)
-> RUSTFLAGS="-C link-arg=-s -C target-cpu=native" cargo build $(CARGOFLAGS) --package $(APP) --release
+> RUSTFLAGS="-C link-arg=-s -C target-cpu=native" cargo build $(CARGOFLAGS) --release
 
 $(DESTDIR)$(PREFIX)/bin/$(APP): target/release/$(APP)
 > install -m755 -- target/release/$(APP) "$(DESTDIR)$(PREFIX)/bin/"

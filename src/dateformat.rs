@@ -20,29 +20,10 @@ pub fn parse(value: &str) -> Result<PublishDate> {
     match human_date_parser::from_human_time(value) {
         Ok(ParseResult::Date(date)) => Ok(PublishDate::Date(date)),
         Ok(ParseResult::DateTime(date)) => Ok(PublishDate::Date(date.date_naive())),
-        Ok(ParseResult::Time(_)) => Err(eyre!("need a data, not just a time")),
+        Ok(ParseResult::Time(_)) => Err(eyre!("need a date, not just a time")),
         Err(_) => Ok(PublishDate::Date(Date::parse_from_str(value, "%Y-%m-%d")?)),
     }
 }
-
-// struct IoWrite<'a, 'b>(&'a mut fmt::Formatter<'b>);
-//
-// impl<'a, 'b> std::io::Write for IoWrite<'a, 'b> {
-//     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-//         std::str::from_utf8(buf)
-//             .map_err(|_| std::io::Error::new(std::io::ErrorKind::InvalidData, "invalid UTF-8"))
-//             .and_then(|s| {
-//                 self.0
-//                     .write_str(s)
-//                     .map(|()| buf.len())
-//                     .map_err(|_| std::io::Error::new(std::io::ErrorKind::Other, "formatter error"))
-//             })
-//     }
-//
-//     fn flush(&mut self) -> std::io::Result<()> {
-//         Ok(())
-//     }
-// }
 
 #[allow(clippy::trivially_copy_pass_by_ref)]
 pub fn serialize<S: Serializer>(
