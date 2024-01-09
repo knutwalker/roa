@@ -9,7 +9,7 @@ license = "MIT OR Apache-2.0"
 rust-version = "1.75.0"
 publish = true
 readme = "README.md"
-categories = ["cli"]
+categories = ["command-line-utilities", "api-bindings"]
 keywords = ["mataroa", "blog"]
 
 [[bin]]
